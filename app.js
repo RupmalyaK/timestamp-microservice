@@ -1,61 +1,35 @@
+// server.js
+// where your node app starts
 
-const express = require('express');
-const app = express();
+// init project
+var express = require('express');
+var app = express();
 
-
+// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
+// so that your API is remotely testable by FCC 
 var cors = require('cors');
 app.use(cors({optionSuccessStatus: 200}));  // some legacy browsers choke on 204
 
+// http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
 
+// http://expressjs.com/en/starter/basic-routing.html
+app.get("/", (req, res) =>   res.sendFile(__dirname + '/views/index.html'));
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + '/views/index.html');
+
+// your first API endpoint... 
+app.get("/api/whoami", (req, res) => {
+    const ipAdress = req.headers['x-forwarded-for'].split(',')[0] || req.connection.remoteAdress;
+    res.status(200).json({
+    "ipadress":ipAdress,
+    "software":req.headers["user-agent"]
+    });
 });
 
-
-
-app.get("/api/timestamp/:date_string?",  (req, res) => {
-  const dateString = req.params.date_string; 
-  if (!dateString)
-  {
-   const date = new Date(); 
-   res.status(200).json({
-  "unix":date.getTime(),
-   "utc":date.toUTCString()
-  });
-    return; 
-  }
-  const date = new Date(isNumeric(dateString) ? parseInt(dateString) : dateString); 
-
-  if(isNaN(date))
-     {
-       res.status(403).json({"error" : "Invalid Date" }); 
-       return; 
-     }
-  res.status(200).json({
-  "unix":date.getTime(),
-   "utc":date.toUTCString()
-  });
+app.get('*', (req , res) => {
+  res.status(404).send('<html><head></head><body><pre style="word-wrap: break-word; white-space: pre-wrap;">Not Found</pre></body></html>');
 });
 
-
-
-const listener = app.listen(process.env.PORT, () => {
-  console.log('Your app is listening on port...' + listener.address().port);
-});
-
-
-
-//After learning REGEX will use it instead of this function 
-function isNumeric (str)
-{
-  for(let i = 0 ; i <= str.length-1 ; i++)
-  {
-   let charCode = str.charCodeAt(i);
-   if (charCode < 48 || charCode > 57)
-   {
-     return false;
-   }}
-  return true; 
-}
+// listen for requests :)
+var listener = app.listen(process.env.PORT, () =>  console.log('Your app is listening on port ' + listener.address().port)
+);
